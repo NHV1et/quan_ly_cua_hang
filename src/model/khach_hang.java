@@ -97,7 +97,6 @@ public class khach_hang {
                 );
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         }
         return null;
     }
@@ -114,7 +113,6 @@ public class khach_hang {
         int rows = stmt.executeUpdate();
         return rows > 0;
     } catch (SQLException e) {
-        e.printStackTrace();
         return false;
     }
 }

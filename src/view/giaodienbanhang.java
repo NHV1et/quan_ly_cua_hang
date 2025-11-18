@@ -3,9 +3,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package view;
+import controller.banhang_controller;
 import model.sp_DAO;
+import model.khach_hang;
+import model.HoaDon;
+import model.Employee;
 import model.SanPham;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import bo_sung_cac_view.SaleTableModel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -16,128 +25,14 @@ public class giaodienbanhang extends javax.swing.JPanel {
     /**
      * Creates new form giaodienchu
      */
+    private boolean updatingTable = false;
+
+    private final banhang_controller controller = new banhang_controller();
+    private final SaleTableModel saleModel = new SaleTableModel();
     public giaodienbanhang() {
         initComponents();
-        initBangSanPham();
-        tblDanhSach.getModel().addTableModelListener(e -> {
-        int col = e.getColumn();
-        if (col == 5 || col == 8) { // Cột số lượng hoặc khấu trừ
-        capNhatTongTien();
-        
-        
+        postInit();
     }
-});
-
-    }
-    
-    // ====== Các getter để lấy dữ liệu từ ô nhập thông tin khách ======
-public String getMaKH() { return jTextPane1.getText().trim(); }
-public String getTenKH() { return jTextPane2.getText().trim(); }
-public String getDiaChi() { return jTextPane3.getText().trim(); }
-public String getSDT() { return jTextPane4.getText().trim(); }
-public String getDiem() { return jTextPane5.getText().trim(); }
-
-// ====== Các getter để lấy dữ liệu từ ô nhập thông tin nhân viên ======
-public String getMaNV() { return jTextPane7.getText().trim(); }
-public String getTenNV() { return jTextPane6.getText().trim(); }
-
-// ====== Các setter để đổ dữ liệu lên giao diện thông tin khách và nhân viên ======
-public void setTenKH(String ten) { jTextPane2.setText(ten); }
-public void setDiaChi(String dc) { jTextPane3.setText(dc); }
-public void setSDT(String sdt) { jTextPane4.setText(sdt); }
-public void setDiem(int diem) { jTextPane5.setText(String.valueOf(diem)); }
-public void setMaNV(String ma_nv) { jTextPane7.setText(ma_nv); }
-public void setTen_NV (String ten_nv) {jTextPane6.setText(ten_nv); }
-
-// ====== Đăng ký sự kiện Enter ======
-
-public void nhan_khach(java.awt.event.ActionListener action) { // Sau khi nhập xong điểm
-    jTextPane5.addKeyListener(new java.awt.event.KeyAdapter() {
-        @Override
-        public void keyPressed(java.awt.event.KeyEvent e) {
-            if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
-                action.actionPerformed(new java.awt.event.ActionEvent(jTextPane5, java.awt.event.ActionEvent.ACTION_PERFORMED, "EnterPressed"));
-            }
-        }
-    });
-}
-
-public void capNhatTongTien() {
-    DefaultTableModel model = (DefaultTableModel) tblDanhSach.getModel();
-    double tong = 0;
-    for (int i = 0; i < model.getRowCount(); i++) {
-        boolean tick = (Boolean) model.getValueAt(i, 0);
-        if (!tick) {
-            double gia = Double.parseDouble(model.getValueAt(i, 4).toString());
-            int sl = Integer.parseInt(model.getValueAt(i, 5).toString());
-            double khauTru = Double.parseDouble(model.getValueAt(i, 8).toString());
-            double thanhTien = gia * sl - khauTru;
-            model.setValueAt(thanhTien, i, 9); // cập nhật cột thành tiền
-            tong += thanhTien;
-        }
-    }
-    txtTienHang.setText(String.valueOf(tong));
-    double vat = tong * 0.1;
-    btnTong.setText(String.valueOf(tong + vat));
-}
-
-public javax.swing.JTextField getBtnTong() {
-    return btnTong;
-}
-
-
-
-public void timKiemSanPham() {
-    String maSP = txtTimKiem.getText().trim();
-    sp_DAO dao = new sp_DAO();
-    SanPham sp = dao.timSanPhamTheoMa(maSP);
-    if (sp != null) {
-        DefaultTableModel model = (DefaultTableModel) tblDanhSach.getModel();
-        int stt = model.getRowCount() + 1;
-        model.addRow(new Object[] {
-            false, stt, sp.getProdId(), sp.getProdName(),
-            sp.getPrice(), 1, 0.0, sp.getPrice()
-        });
-        capNhatTongTien();
-    } else {
-        hienThiThongBao("Không tìm thấy sản phẩm!");
-    }
-}
-
-// ====== Hiển thị thông báo ======
-public void hienThiThongBao(String msg) {
-    javax.swing.JOptionPane.showMessageDialog(this, msg);
-}
-
-private void initBangSanPham() {
-    String[] headers = { "", "STT", "Mã sản phẩm", "Tên sản phẩm", "Đơn giá", "Số lượng", "Số lượng tồn", "Loại khuyến mãi", "Khấu trừ", "Thành tiền" };
-
-DefaultTableModel model = new DefaultTableModel(null, headers) {
-    @Override
-    public boolean isCellEditable(int row, int column) {
-        // Chỉ cho phép chỉnh sửa cột số lượng (5) và khấu trừ (8)
-        return column == 5 || column == 8;
-    }
-
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-        return switch (columnIndex) {
-            case 0 -> Boolean.class;   // checkbox
-            case 1, 5, 6 -> Integer.class;
-            case 4, 8, 9 -> Double.class;
-            default -> String.class;
-        };
-    }
-};
-
-tblDanhSach.setModel(model);
-
-}
-
-
-
-
-
 
 
     /**
@@ -193,12 +88,12 @@ tblDanhSach.setModel(model);
         jLabel13 = new javax.swing.JLabel();
         txtTienHang = new javax.swing.JTextField();
         jLabel11 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
         btntong = new javax.swing.JLabel();
-        btnTong = new javax.swing.JTextField();
         btnThongKe = new javax.swing.JButton();
         baocao = new javax.swing.JButton();
         btnThanhToan = new javax.swing.JButton();
+        btnTong = new javax.swing.JTextField();
+        jTextField1 = new javax.swing.JTextField();
         jProgressBar9 = new javax.swing.JProgressBar();
         jProgressBar1 = new javax.swing.JProgressBar();
         jButton1 = new javax.swing.JButton();
@@ -427,7 +322,7 @@ tblDanhSach.setModel(model);
 
         jLabel11.setText("VAT: ");
 
-        btntong.setText("Tongtien");
+        btntong.setText("Tongtien:");
 
         btnThongKe.setText("Thống Kê");
 
@@ -461,18 +356,16 @@ tblDanhSach.setModel(model);
                             .addComponent(jLabel11)
                             .addComponent(jLabel13))
                         .addGap(18, 18, 18)))
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(txtTienHang, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnTong, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(31, 31, 31)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnTong, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtTienHang, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(31, 31, 31)
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnThongKe, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(baocao, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(30, 30, 30)
-                        .addComponent(btnThanhToan, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(btnThongKe, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(baocao, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(30, 30, 30)
+                .addComponent(btnThanhToan, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(58, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
@@ -487,21 +380,21 @@ tblDanhSach.setModel(model);
                                     .addComponent(txtTienHang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel13)
                                     .addComponent(btnThongKe, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(5, 5, 5)
-                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(btnTong, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel11)))
+                                .addGap(8, 8, 8)
+                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel11)
+                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addGap(31, 31, 31)
                                 .addComponent(btnThanhToan, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(7, 7, 7)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btntong)))
+                            .addComponent(btntong)
+                            .addComponent(btnTong, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addGap(73, 73, 73)
                         .addComponent(baocao, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
         jButton1.setBackground(new java.awt.Color(204, 204, 255));
@@ -605,7 +498,7 @@ tblDanhSach.setModel(model);
                         .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(104, 104, 104)
                         .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addContainerGap(22, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     
@@ -620,6 +513,17 @@ tblDanhSach.setModel(model);
 
     private void btnTimKiemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnTimKiemMouseClicked
         // TODO add your handling code here:
+        String q = txtTimKiem.getText().trim();
+        if (q.isEmpty()) return;
+        SanPham p = controller.tim_sp_ma(q);
+        if (p != null) {
+            saleModel.addProduct(p.getProdId(), p.getProdName(), p.getPrice(), p.getQuantity(), p.getPromoType());
+        } else {
+            // add blank row để nhân viên nhập mã trực tiếp hoặc báo lỗi
+            int opt = JOptionPane.showConfirmDialog(giaodienbanhang.this, "Không tìm thấy sản phẩm. Thêm hàng trống để nhập mã?", "Sản phẩm không tìm thấy", JOptionPane.YES_NO_OPTION);
+            if (opt == JOptionPane.YES_OPTION) saleModel.addBlankRow();
+        }
+        txtTimKiem.setText("");
     }//GEN-LAST:event_btnTimKiemMouseClicked
 
     private void btnThanhToanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnThanhToanActionPerformed
@@ -690,4 +594,156 @@ tblDanhSach.setModel(model);
     public javax.swing.JTextField txtTienHang;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
+
+    private void postInit()
+    {
+        // 1) gắn model cho bảng
+    tblDanhSach.setModel(saleModel);
+
+    // make checkbox editor/renderer work
+    tblDanhSach.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+    tblDanhSach.getColumnModel().getColumn(0).setCellRenderer(tblDanhSach.getDefaultRenderer(Boolean.class));
+
+    // Set column 5 (Số lượng) default editor (text) — optional: create Integer editor or spinner
+    // Thêm listener để cập nhật tổng realtime
+    saleModel.addTableModelListener(new TableModelListener() {
+        @Override
+        public void tableChanged(TableModelEvent e) {
+            double tong = 0.0;
+            double VAT = 0.0;
+            double tien_chua_qua_VAT = 0.0;
+            for (SaleTableModel.SaleRow r : saleModel.getRows()) 
+            {
+                tien_chua_qua_VAT += r.total;
+                VAT = (tien_chua_qua_VAT * 8) / 100;
+            }
+            
+            tong = VAT + tien_chua_qua_VAT;
+            txtTienHang.setText(String.format("%.2f", tien_chua_qua_VAT));
+            jTextField1.setText(String.format("%.2f",VAT));
+            btnTong.setText(String.format("%.2f",tong));
+        }
+    });
+
+    // 2) bắt Enter trên jTextPane1 (mã khách) — consume Enter để tránh xuống dòng
+    jTextPane1.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                e.consume();
+                String ma = jTextPane1.getText().trim();
+                if (ma.isEmpty()) return;
+                khach_hang c = controller.tim_kh_ma(ma);
+                if (c != null) {
+                    jTextPane2.setText(c.getCustomerName());
+                    // jTextPane3.setText(c.getAddress());
+                    jTextPane4.setText(c.getCustomerPhone());
+                    jTextPane5.setText(String.valueOf(c.getPoint()));
+                    jTextPane2.setEditable(false); jTextPane3.setEditable(false); jTextPane4.setEditable(false);
+                } else {
+                    JOptionPane.showMessageDialog(giaodienbanhang.this, "Mã khách không tồn tại. Tiếp tục nhập thông tin mới.");
+                    jTextPane2.requestFocus();
+                }
+            }
+        }
+    });
+
+    // 3) bắt Enter trên jTextPane7 (mã nhân viên)
+    jTextPane7.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                e.consume();
+                String ma = jTextPane7.getText().trim();
+                if (ma.isEmpty()) return;
+                Employee emp = controller.tim_nv_ma(ma);
+                if (emp != null) {
+                    jTextPane6.setText(emp.getEmpName());
+                    // jTextPane8.setText(emp.getWarehouse());
+                    jTextPane6.setEditable(false);
+                } else {
+                    JOptionPane.showMessageDialog(giaodienbanhang.this, "Mã nhân viên không tìm thấy", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    jTextPane7.requestFocus();
+                    jTextPane7.selectAll();
+                }
+            }
+        }
+    });
+
+    // 4) tìm sản phẩm khi nhấn Enter ở txtTimKiem (giữ UI cũ)
+    txtTimKiem.addActionListener(evt -> {
+        String q = txtTimKiem.getText().trim();
+        if (q.isEmpty()) return;
+        SanPham p = controller.tim_sp_ma(q);
+        if (p != null) {
+            saleModel.addProduct(p.getProdId(), p.getProdName(), p.getPrice(), p.getQuantity(), p.getPromoType());
+        } else {
+            // add blank row để nhân viên nhập mã trực tiếp hoặc báo lỗi
+            int opt = JOptionPane.showConfirmDialog(giaodienbanhang.this, "Không tìm thấy sản phẩm. Thêm hàng trống để nhập mã?", "Sản phẩm không tìm thấy", JOptionPane.YES_NO_OPTION);
+            if (opt == JOptionPane.YES_OPTION) saleModel.addBlankRow();
+        }
+        txtTimKiem.setText("");
+    });
+
+    saleModel.addTableModelListener(e -> {
+    if (e.getType() != TableModelEvent.UPDATE) return;
+    if (updatingTable) return; // ngăn re-entry
+
+    try {
+        updatingTable = true;
+        for (SaleTableModel.SaleRow r : saleModel.getRows()) {
+            if (r.code != null && !r.code.isEmpty() && (r.name == null || r.name.isEmpty())) {
+                SanPham p = controller.tim_sp_ma(r.code);
+                if (p != null) {
+                    r.name = p.getProdName();
+                    r.unitPrice = p.getPrice();
+                    r.stock = p.get_ton_kho();
+                    r.promo = p.getPromoType();
+                    if (r.selected) r.total = r.unitPrice * r.quantity - r.discount;
+                }
+            }
+        }
+        saleModel.fireTableDataChanged(); // an toàn vì guard đang true, lần gọi lặp sẽ return nhanh
+    } finally {
+        updatingTable = false;
+    }
+});
+
+
+    // 6) Thanh Toán: gắn vào nút btnThanhToan (bạn có sẵn handler, thay body bằng):
+    btnThanhToan.addActionListener(evt -> {
+        double tong;
+        try { tong = Double.parseDouble(btnTong.getText().trim()); } catch (Exception ex) { JOptionPane.showMessageDialog(giaodienbanhang.this, "Tổng tiền không hợp lệ"); return; }
+        if (tong <= 0) { JOptionPane.showMessageDialog(giaodienbanhang.this, "Không có sản phẩm để thanh toán."); return; }
+        String[] options = { "Thẻ", "Tiền mặt", "Hủy" };
+        int choice = JOptionPane.showOptionDialog(giaodienbanhang.this, "Chọn phương thức thanh toán", "Thanh Toán",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) return;
+        String method = options[choice];
+
+         // 3) Tạo đối tượng HoaDon (sử dụng constructor bạn có: HoaDon(invoiceId, customerId, empId, invoiceDate, total, method))
+        String invoiceId = java.util.UUID.randomUUID().toString(); // sinh mã hóa đơn ngẫu nhiên
+        String customerId = jTextPane1.getText().trim();
+        String empId = jTextPane7.getText().trim();
+        java.sql.Date sqlDate = new java.sql.Date(System.currentTimeMillis());
+        float totalFloat = (float) tong;
+
+        model.HoaDon hd = new model.HoaDon(invoiceId, customerId, empId, sqlDate, totalFloat, method);
+        controller.chen_hd(hd);
+        
+        /*
+        boolean ok = controller.chen_hd(hd);
+        if (ok) {
+        JOptionPane.showMessageDialog(this, "Lưu hóa đơn thành công");
+        } else {
+            JOptionPane.showMessageDialog(this, "Lưu hóa đơn thất bại — kiểm tra console log");
+            }
+        */
+    });
+        
+    }
+    
 }
+
+
+

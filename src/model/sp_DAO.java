@@ -23,7 +23,7 @@ public class sp_DAO {
     
     public SanPham timSanPhamTheoMa(String maSP) {
     Connection conn = Ket_Noi_DB.getConnection();
-    String sql = "SELECT PROD_NAME, PRICE, QUANTITY, EXP_DATE FROM san_pham WHERE PROD_ID = ?";
+    String sql = "SELECT PROD_NAME, PRICE, QUANTITY, EXP_DATE, ton_kho FROM san_pham WHERE PROD_ID = ?";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
         ps.setString(1, maSP);
         ResultSet rs = ps.executeQuery();
@@ -33,7 +33,8 @@ public class sp_DAO {
                 rs.getString("PROD_NAME"),
                 rs.getFloat("PRICE"),
                 rs.getInt("QUANTITY"),
-                rs.getTimestamp("EXP_DATE")
+                rs.getTimestamp("EXP_DATE"),
+                rs.getInt("ton_kho")
             );
         }
     } catch (SQLException e) {

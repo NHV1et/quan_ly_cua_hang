@@ -1,28 +1,27 @@
 package quanlycuahang;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import view.giaodienbanhang;
-import controller.banhang_controller;
+
 
 public class Quanlycuahang {
     public static void main(String[] args) {
-        // Đảm bảo chạy trên luồng giao diện Swing
+        // Chạy GUI trên EDT
         SwingUtilities.invokeLater(() -> {
-            // Tạo JFrame
-            JFrame frame = new JFrame("Quản Lý Cửa Hàng - Bán Hàng");
+            // Tạo frame
+            JFrame frame = new JFrame("Bán hàng");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(800, 600);
 
-            // Tạo View
-            giaodienbanhang view = new giaodienbanhang();
+            // Tạo panel view (giaodienbanhang)
+            giaodienbanhang panel = new giaodienbanhang();
 
-            // Gắn Controller
-            new banhang_controller(view);
+            // Nếu bạn có hàm postInit() hoặc cần bind controller/model, gọi ở đây
+            // panel.postInit(); // nếu bạn đã thêm method này
 
-            // Đưa View vào Frame
-            frame.setContentPane(view);
-
-            // Hiển thị
+            frame.setContentPane(panel);
+            frame.pack(); // hoặc frame.setSize(1200, 800);
+            frame.setLocationRelativeTo(null); // căn giữa
             frame.setVisible(true);
         });
     }

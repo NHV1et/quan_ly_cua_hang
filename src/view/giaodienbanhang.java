@@ -26,7 +26,8 @@ public class giaodienbanhang extends javax.swing.JPanel {
      * Creates new form giaodienchu
      */
     private boolean updatingTable = false;
-
+    private String empName, CustomerName;
+    
     private final banhang_controller controller = new banhang_controller();
     private final SaleTableModel saleModel = new SaleTableModel();
     public giaodienbanhang() {
@@ -603,7 +604,7 @@ public class giaodienbanhang extends javax.swing.JPanel {
     // make checkbox editor/renderer work
     tblDanhSach.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JCheckBox()));
     tblDanhSach.getColumnModel().getColumn(0).setCellRenderer(tblDanhSach.getDefaultRenderer(Boolean.class));
-
+    
     // Set column 5 (Số lượng) default editor (text) — optional: create Integer editor or spinner
     // Thêm listener để cập nhật tổng realtime
     saleModel.addTableModelListener(new TableModelListener() {
@@ -615,7 +616,7 @@ public class giaodienbanhang extends javax.swing.JPanel {
             for (SaleTableModel.SaleRow r : saleModel.getRows()) 
             {
                 tien_chua_qua_VAT += r.total;
-                VAT = (tien_chua_qua_VAT * 8) / 100;
+                VAT = tien_chua_qua_VAT * 0.08;
             }
             
             tong = VAT + tien_chua_qua_VAT;
@@ -624,9 +625,10 @@ public class giaodienbanhang extends javax.swing.JPanel {
             btnTong.setText(String.format("%.2f",tong));
         }
     });
-
+    
     // 2) bắt Enter trên jTextPane1 (mã khách) — consume Enter để tránh xuống dòng
     jTextPane1.addKeyListener(new java.awt.event.KeyAdapter() {
+        
         @Override
         public void keyPressed(java.awt.event.KeyEvent e) {
             if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
@@ -644,12 +646,14 @@ public class giaodienbanhang extends javax.swing.JPanel {
                     JOptionPane.showMessageDialog(giaodienbanhang.this, "Mã khách không tồn tại. Tiếp tục nhập thông tin mới.");
                     jTextPane2.requestFocus();
                 }
+                CustomerName = c.getCustomerName();
             }
         }
     });
 
     // 3) bắt Enter trên jTextPane7 (mã nhân viên)
     jTextPane7.addKeyListener(new java.awt.event.KeyAdapter() {
+        
         @Override
         public void keyPressed(java.awt.event.KeyEvent e) {
             if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
@@ -666,6 +670,7 @@ public class giaodienbanhang extends javax.swing.JPanel {
                     jTextPane7.requestFocus();
                     jTextPane7.selectAll();
                 }
+               empName = emp.getEmpName();
             }
         }
     });
@@ -690,6 +695,7 @@ public class giaodienbanhang extends javax.swing.JPanel {
     if (updatingTable) return; // ngăn re-entry
 
     try {
+        
         updatingTable = true;
         for (SaleTableModel.SaleRow r : saleModel.getRows()) {
             if (r.code != null && !r.code.isEmpty() && (r.name == null || r.name.isEmpty())) {
@@ -699,7 +705,10 @@ public class giaodienbanhang extends javax.swing.JPanel {
                     r.unitPrice = p.getPrice();
                     r.stock = p.get_ton_kho();
                     r.promo = p.getPromoType();
-                    if (r.selected) r.total = r.unitPrice * r.quantity - r.discount;
+                    if (r.selected) {
+                        r.total = r.unitPrice * r.quantity - r.discount;
+                        
+                    }
                 }
             }
         }
@@ -723,6 +732,7 @@ public class giaodienbanhang extends javax.swing.JPanel {
 
          // 3) Tạo đối tượng HoaDon (sử dụng constructor bạn có: HoaDon(invoiceId, customerId, empId, invoiceDate, total, method))
         String invoiceId = java.util.UUID.randomUUID().toString(); // sinh mã hóa đơn ngẫu nhiên
+        
         String customerId = jTextPane1.getText().trim();
         String empId = jTextPane7.getText().trim();
         java.sql.Date sqlDate = new java.sql.Date(System.currentTimeMillis());
@@ -731,6 +741,25 @@ public class giaodienbanhang extends javax.swing.JPanel {
         model.HoaDon hd = new model.HoaDon(invoiceId, customerId, empId, sqlDate, totalFloat, method);
         controller.chen_hd(hd);
         
+        // Pop - Up hóa đơn ra ngoài:
+        
+        
+        // Lấy danh sách sản phẩm đã chọn
+            List<SaleTableModel.SaleRow> selectedRows = new ArrayList<>();
+            for (SaleTableModel.SaleRow r : saleModel.getRows()) {
+                if (r.selected) selectedRows.add(r);
+            }
+
+        SwingUtilities.invokeLater(() -> {
+        giaodienhoadon panel = new giaodienhoadon(invoiceId, CustomerName, empName, sqlDate, totalFloat, method, (ArrayList<SaleTableModel.SaleRow>) selectedRows);
+        JFrame frame = new JFrame("Hóa Đơn");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setContentPane(panel);
+        frame.pack();
+        frame.setLocationRelativeTo(null); // căn giữa màn hình
+        frame.setVisible(true);
+});
+
         /*
         boolean ok = controller.chen_hd(hd);
         if (ok) {

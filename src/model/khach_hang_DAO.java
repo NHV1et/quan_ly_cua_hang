@@ -25,7 +25,7 @@ public class khach_hang_DAO {
         return null;
     }
     
-    public boolean themKhachHang(khach_hang kh) {
+        public boolean themKhachHang(khach_hang kh) {
     Connection conn = Ket_Noi_DB.getConnection(); // hoặc MyConnection nếu bạn đổi tên
     String sql = "INSERT INTO khach_hang (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_PHONE, CUSTOMER_EMAIL, POINT) VALUES (?, ?, ?, ?, ?)";
     try (PreparedStatement stmt = conn.prepareStatement(sql)) {

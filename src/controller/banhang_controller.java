@@ -54,4 +54,9 @@ public class banhang_controller {
         return hd_DAO.insertHoaDon(hd);
     }
     
+    public boolean them_kh(khach_hang kh)
+    {
+        return kh_DAO.themKhachHang(kh);
+    }
+    
 }
